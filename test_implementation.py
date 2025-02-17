@@ -56,16 +56,16 @@ def test_positional_encoding(embed_dim=128, max_seq_len=512):
     
 if __name__ == '__main__':
     set_seed(5)
-    # train_iter, _ = prepare_data_iter(batch_size=2)
-    # batch = next(iter(train_iter))
-    # for i in range(2):
-    #     example = batch.dataset.examples[i]
-    #     review = ' '.join(example.text)
-    #     label = example.label
+    train_iter, _ = prepare_data_iter(batch_size=2)
+    batch = next(iter(train_iter))
+    for i in range(2):
+        example = batch.dataset.examples[i]
+        review = ' '.join(example.text)
+        label = example.label
 
-    #     print('-'*10,f'Review {i+1}','-'*10)
-    #     print(review)
-    #     print(f'Label: {label}')
+        print('-'*10,f'Review {i+1}','-'*10)
+        print(review)
+        print(f'Label: {label}')
 
     print()
     print('test Attention implementation')
