@@ -30,7 +30,7 @@ class Attention(nn.Module):
         self.v_projeciton  = nn.Linear(embed_dim, embed_dim, bias=False)
         self.o_projection = nn.Linear(embed_dim, embed_dim)
 
-    def forward(self, x):
+    def forward(self, x, save_att: bool = False):
 
         batch_size, seq_len, embed_dim = x.size()
         keys    = self.k_projection(x)
@@ -55,15 +55,19 @@ class Attention(nn.Module):
         assert attention.size() == (batch_size*self.num_heads, seq_len, seq_len)
         assert out.size() == (batch_size, seq_len, embed_dim)
 
+        if save_att:
+            attention = rearrange(attention, "(b h) s s -> b h s s", b=batch_size, h=self.num_heads)
+            return self.o_projection(out), attention
         return self.o_projection(out)
 
 class EncoderBlock(nn.Module):
-    def __init__(self, embed_dim, num_heads, fc_dim=None, dropout=0.0):
+    def __init__(self, embed_dim, num_heads, fc_dim=None, dropout=0.0, save_att: bool = False):
         super().__init__()
 
         self.attention = Attention(embed_dim=embed_dim, num_heads=num_heads)
         self.layernorm1 = nn.LayerNorm(embed_dim)
         self.layernorm2 = nn.LayerNorm(embed_dim)
+        self.save_att = save_att
 
         fc_hidden_dim = 4*embed_dim if fc_dim is None else fc_dim
 
@@ -76,7 +80,11 @@ class EncoderBlock(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        attention_out = self.attention(x)
+        if self.save_att:
+            attention_out, attention = self.attention(x, True)
+            self.attention = attention
+        else:
+            attention_out = self.attention(x)
         x = self.layernorm1(attention_out + x)
         x = self.dropout(x)
         fc_out = self.fc(x)
@@ -87,7 +95,7 @@ class EncoderBlock(nn.Module):
 class ViT(nn.Module):
     def __init__(self, image_size, channels, patch_size, embed_dim, num_heads, num_layers,
                  pos_enc='fixed', pool='cls', dropout=0.0, 
-                 fc_dim=None, num_classes=2, ):
+                 fc_dim=None, num_classes=2, save_att: bool = False):
         
         super().__init__()
 
@@ -138,7 +146,7 @@ class ViT(nn.Module):
         transformer_blocks = []
         for i in range(num_layers):
             transformer_blocks.append(
-                EncoderBlock(embed_dim=embed_dim, num_heads=num_heads, fc_dim=fc_dim, dropout=dropout))
+                EncoderBlock(embed_dim=embed_dim, num_heads=num_heads, fc_dim=fc_dim, dropout=dropout, save_att=save_att))
 
         self.transformer_blocks = nn.Sequential(*transformer_blocks)
         self.classifier = nn.Linear(embed_dim, num_classes)
@@ -146,7 +154,6 @@ class ViT(nn.Module):
 
 
     def forward(self, img):
-
         tokens = self.to_patch_embedding(img)
         batch_size, num_patches, embed_dim = tokens.size()
         
@@ -171,3 +178,7 @@ class ViT(nn.Module):
             x = x[:, 0]
 
         return self.classifier(x)
+    
+    def plot_attention(self):
+        # B num_head seq seq
+
