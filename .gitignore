@@ -1,6 +1,7 @@
 # ours
 .data
 .vscode
+.ruff_cache
 
 
 
