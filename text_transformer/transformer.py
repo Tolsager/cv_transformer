@@ -38,7 +38,6 @@ class Attention(nn.Module):
         Now you have to split the projected keys, queries, and values to multiple heads.
         """
         # First split the embed_dim to num_heads x head_dim
-        # keys = keys.reshape(batch_size, seq_length, self.num_heads, -1)
         keys = rearrange(keys, 'b s (nh hd) -> b s nh hd', hd=self.head_dim)
         # Secondly merge the batch_size with the num_heads
         keys = rearrange(keys, 'b s nh hd -> (b nh) s hd')
@@ -50,7 +49,7 @@ class Attention(nn.Module):
         values = rearrange(values, 'b s (nh hd) -> b s nh hd', hd=self.head_dim)
         values = rearrange(values, 'b s nh hd -> (b nh) s hd')
 
-        # Compute attetion logits
+        # Compute attention logits
         attention_logits = torch.bmm(queries, keys.permute(0, 2, 1)) # multiply queries and keys
         attention_logits = attention_logits * self.scale
         attention = F.softmax(attention_logits) # softmax on attention

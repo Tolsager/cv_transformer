@@ -103,23 +103,27 @@ class ViT(nn.Module):
         num_patches = (H // patch_h) * (W // patch_w)
         patch_dim = channels * patch_h * patch_w
 
+        num_patches_h = H // patch_h
+        num_patches_w = W // patch_w
         if self.pool == 'cls':
             self.cls_token = nn.Parameter(torch.rand(1,1,embed_dim))
             num_patches += 1
         
         # TASK: Implement patch embedding layer 
-        #       Convert imaged to patches and project to the embedding dimension
+        #       Convert image to patches and project to the embedding dimension
         # HINT: 1) Use the Rearrange layer from einops.layers.torch 
         #          in the same way you used the rearrange function 
         #          in the image_to_patches function (playground.py)
         #       2) Stack Rearrange layer with a linear projection layer using nn.Sequential
         #          Consider including LayerNorm layers before and after the linear projection
         ######## insert code here ########
-        #
-        #
-        #
-        #
-        #
+        self.to_patch_embedding = nn.Sequential(
+            Rearrange("B C (num_patches_h patch_h) (num_patches_w patch_w) -> B C num_patches_h patch_h num_patches_w patch_w", num_patches_h=num_patches_h, patch_h=patch_h, num_patches_w=num_patches_w, patch_w=patch_w),
+            Rearrange("B C num_patches_h patch_h num_patches_w patch_w -> B (num_patches_h num_patches_w) (C patch_h patch_w)"),
+            nn.LayerNorm(3*patch_h*patch_w),
+            nn.Linear(3*patch_h*patch_w, embed_dim),
+            nn.LayerNorm(embed_dim)
+        )
         #################################
 
         if self.pos_enc == 'learnable':
