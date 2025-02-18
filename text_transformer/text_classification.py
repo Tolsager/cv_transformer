@@ -26,7 +26,6 @@ def prepare_data_iter(sampled_ratio=0.2, batch_size=16):
     TEXT = data.Field(lower=True, include_lengths=True, batch_first=True)
     LABEL = data.Field(sequential=False)
     tdata, _ = datasets.IMDB.splits(TEXT, LABEL)
-    print(tdata)
     # Reduce dataset size
     reduced_tdata, _ = tdata.split(split_ratio=sampled_ratio)
     # Create train and test splits
